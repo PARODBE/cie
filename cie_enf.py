@@ -5,7 +5,7 @@ from streamlit_option_menu import option_menu
 
 def send_df_to_db(df):
     # Aquí podrías agregar lógica para enviar el DataFrame a una base de datos
-    print(f"Sending df to DB:\n{df}")
+    print(f"Nuevo dataset:\n{df}")
     st.write("Sending df to DB:")
     st.write(df)
 
