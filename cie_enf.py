@@ -1,7 +1,25 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
 import base64
 from streamlit_option_menu import option_menu
+
+def send_df_to_db(df):
+    # Aquí podrías agregar lógica para enviar el DataFrame a una base de datos
+    print(f"Sending df to DB:\n{df}")
+    st.write("Sending df to DB:")
+    st.write(df)
+
+# Función para cargar los datos desde GitHub
+def get_data():
+    github_csv_url = "https://raw.githubusercontent.com/PARODBE/cie/main/cie10.csv"
+    df = pd.read_csv(github_csv_url, index_col=0)[['Código', 'Descripción', 'Nodo_Final']]
+    return df
+
+# Inicializa el estado de la sesión para el DataFrame
+if 'df' not in st.session_state:
+    st.session_state.df = None
+if 'edited_df' not in st.session_state:
+    st.session_state.edited_df = None
 
 # Título principal
 st.markdown("<h1 style='text-align: center; font-size: 100px; font-style: italic; color: grey;'>Extractor de CIEs 10</h1>", unsafe_allow_html=True)
@@ -13,7 +31,7 @@ footer_style = """
     z-index: 3;
     bottom: 0;
     width: 100%;
-    color: white;
+    color: blue;
     font-style: italic;
     text-align: left;
     padding: 10px;
@@ -24,23 +42,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Manejo del estado del menú
-if st.session_state.get('switch_button', False):
-    st.session_state['menu_option'] = (st.session_state.get('menu_option', 0) + 1) % 2
-    manual_select = st.session_state['menu_option']
-else:
-    manual_select = None
-
 # Menú de navegación
 selected = option_menu(None, ["Home", "Datos", "Contacto"],
                         icons=['house', "upload", "envelope-at-fill"],
-                        orientation="horizontal", manual_select=manual_select, key='menu_20', menu_icon='cast', default_index=0,
-                        styles={
-        "container": {"padding": "21!important", "background-color": "#b4bbbf", "width": "auto"},
-        "icon": {"color": "#4e5152", "font-size": "25px", "text-align": "center"},
-        "nav-link": {"font-size": "25px", "text-align": "center", "margin": "15px", "--hover-color": "#757473", "font-color": "#0a0a0a"},
-        "nav-link-selected": {"background-color": "#2E6E88"},
-    })
+                        orientation="horizontal", key='menu_20', menu_icon='cast', default_index=0)
 
 # Sección de "Home"
 if selected == "Home":
@@ -53,43 +58,49 @@ if selected == "Home":
 # Sección de "Datos"
 elif selected == "Datos":
     st.title("Buscador de Enfermedades CIE10")
-
-    # Cargar datos una sola vez y almacenarlos en el estado de la sesión
-    if "data" not in st.session_state:
-        github_csv_url = "https://raw.githubusercontent.com/PARODBE/cie/main/cie10.csv"
-        st.session_state.data = pd.read_csv(github_csv_url, index_col=0)[['Código', 'Descripción', 'Nodo_Final']]
     
-    # Guardar el DataFrame en una variable local
-    results = st.session_state.data
+    if st.button("Cargar datos"):
+        st.write("Cargando datos...")
+        st.session_state.df = get_data()
+        st.session_state.edited_df = st.session_state.df.copy()  # Inicia la versión editada con los datos cargados
 
-    enf = st.text_input("Ingrese el nombre de la enfermedad:", value=st.session_state.get("search_term", ""))
-
-    # Botón para realizar la búsqueda
-    if st.button("Buscar Enfermedad"):
-        st.session_state.search_term = enf  # Guardar el término de búsqueda
-        filtered_results = results[(results.Código.str.contains(enf, case=False, na=False)) | 
-                                   (results.Descripción.str.contains(enf, case=False, na=False))]
-
-        # Almacenar los resultados filtrados en el estado de la sesión
-        st.session_state["results"] = filtered_results
-
-        # Verificar si hay resultados
+    if st.session_state.df is not None:
+        enf = st.text_input("Ingrese el nombre de la enfermedad:", value=st.session_state.get("search_term", ""))
+        
+        # Filtrar resultados basados en la entrada del usuario
+        filtered_results = st.session_state.edited_df[  # Cambiado a edited_df
+            (st.session_state.edited_df.Código.str.contains(enf, case=False, na=False)) | 
+            (st.session_state.edited_df.Descripción.str.contains(enf, case=False, na=False))
+        ]
+        
         if not filtered_results.empty:
-            st.data_editor(filtered_results, num_rows="dynamic")
+            with st.form("Edit form:"):
+                # Usar la versión editada del DataFrame para el editor
+                edited_df = st.data_editor(filtered_results, num_rows="dynamic")
+                submitted = st.form_submit_button("Ingresar dataset cambiado")
+                if submitted:
+                    send_df_to_db(edited_df)
 
-            # Convertir el DataFrame a texto para descarga
-            txt = ','.join(code.strip() for code in filtered_results['Código'].tolist())
+                    # Convertir el DataFrame editado a texto para descarga
+                    txt = ','.join(code.strip() for code in edited_df['Código'].tolist())
 
-            # Codificar el texto en base64
-            b64 = base64.b64encode(txt.encode()).decode()
+                    # Codificar el texto en base64
+                    b64 = base64.b64encode(txt.encode()).decode()
 
-            # Crear el enlace para descargar el archivo de texto
-            linko = f'<a href="data:file/txt;base64,{b64}" download="cies.txt">Download txt file</a>'
+                    # Crear el enlace para descargar el archivo de texto
+                    linko = f'<a href="data:file/txt;base64,{b64}" download="cies.txt">Download txt file</a>'
 
-            # Mostrar el enlace en Streamlit
-            st.markdown(linko, unsafe_allow_html=True)
+                    # Mostrar el enlace en Streamlit
+                    st.markdown(linko, unsafe_allow_html=True)
+
+                    # No limpiar el estado de la sesión, permitiendo volver a cargar datos
+                    # st.session_state.df = None
+                    # st.session_state.edited_df = None
         else:
             st.write("No se encontraron resultados.")
+
+    else:
+        st.write("No se ha cargado ningún dato")
 
 # Sección de "Contacto"
 elif selected == "Contacto":
