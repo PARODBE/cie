@@ -6,7 +6,7 @@ from streamlit_option_menu import option_menu
 def send_df_to_db(df):
     # Aquí podrías agregar lógica para enviar el DataFrame a una base de datos
     print(f"Nuevo dataset:\n{df}")
-    st.write("Sending df to DB:")
+    st.write("Nuevo dataset:")
     st.write(df)
 
 # Función para cargar los datos desde GitHub
@@ -88,7 +88,7 @@ elif selected == "Datos":
                     b64 = base64.b64encode(txt.encode()).decode()
 
                     # Crear el enlace para descargar el archivo de texto
-                    linko = f'<a href="data:file/txt;base64,{b64}" download="cies.txt">Download txt file</a>'
+                    linko = f'<a href="data:file/txt;base64,{b64}" download="cies.txt">Descargar un archivo tipo txt</a>'
 
                     # Mostrar el enlace en Streamlit
                     st.markdown(linko, unsafe_allow_html=True)
