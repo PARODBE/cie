@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import base64
 from streamlit_option_menu import option_menu
+from io import StringIO
 
 def send_df_to_db(df):
     # Aquí podrías agregar lógica para enviar el DataFrame a una base de datos
@@ -81,14 +82,31 @@ elif selected == "Datos":
                 if submitted:
                     send_df_to_db(edited_df)
 
-                    # Convertir el DataFrame editado a texto para descarga
-                    txt = ','.join(code.strip() for code in edited_df['Código'].tolist())
+                    # # Convertir el DataFrame editado a texto para descarga
+                    # txt = ','.join(code.strip() for code in edited_df['Código'].tolist())
 
-                    # Codificar el texto en base64
-                    b64 = base64.b64encode(txt.encode()).decode()
+                    # # Codificar el texto en base64
+                    # b64 = base64.b64encode(txt.encode()).decode()
 
-                    # Crear el enlace para descargar el archivo de texto
-                    linko = f'<a href="data:file/txt;base64,{b64}" download="cies.txt">Descargar un archivo tipo txt</a>'
+                    # # Crear el enlace para descargar el archivo de texto
+                    # linko = f'<a href="data:file/txt;base64,{b64}" download="cies.txt">Descargar un archivo tipo txt</a>'
+
+                    # Convertir la columna 'Código' a un formato con comillas dobles
+                    edited_df['Código'] = edited_df['Código'].apply(lambda x: f'"{x}"')
+
+                    # Convertir el DataFrame a un archivo CSV en formato string
+                    output = StringIO()
+                    edited_df[['Código','Descripción']].to_csv(output, index=False, quoting=1)  # quoting=1 asegura que los valores en comillas dobles se mantengan
+
+                    # Obtener el texto CSV
+                    csv_text = output.getvalue()
+                    output.close()
+
+                    # Codificar el texto CSV en base64
+                    b64 = base64.b64encode(csv_text.encode()).decode()
+
+                    # Crear el enlace para descargar el archivo CSV
+                    linko = f'<a href="data:file/csv;base64,{b64}" download="cies.csv">Descargar un archivo tipo CSV</a>'
 
                     # Mostrar el enlace en Streamlit
                     st.markdown(linko, unsafe_allow_html=True)
