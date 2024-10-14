@@ -91,11 +91,11 @@ elif selected == "Datos":
                     # # Crear el enlace para descargar el archivo de texto
                     # linko = f'<a href="data:file/txt;base64,{b64}" download="cies.txt">Descargar un archivo tipo txt</a>'
 
-                    # Convertir la columna 'Código' a un formato con comillas dobles
-                    edited_df['Código'] = edited_df['Código'].apply(lambda x: f'"{x}"')
+                    # # Convertir la columna 'Código' a un formato con comillas dobles
+                    # edited_df['Código'] = edited_df['Código'].apply(lambda x: f'"{x}"')
 
-                    # Convertir el DataFrame a un archivo CSV en formato string
-                    output = StringIO()
+                    # # Convertir el DataFrame a un archivo CSV en formato string
+                    # output = StringIO()
                     edited_df[['Código','Descripción']].to_csv(output, index=False, quoting=1)  # quoting=1 asegura que los valores en comillas dobles se mantengan
 
                     # Obtener el texto CSV
