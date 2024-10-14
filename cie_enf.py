@@ -96,14 +96,14 @@ elif selected == "Datos":
 
                     # # Convertir el DataFrame a un archivo CSV en formato string
                     # output = StringIO()
-                    edited_df[['Código','Descripción']].to_csv(output, index=False, quoting=1)  # quoting=1 asegura que los valores en comillas dobles se mantengan
+                    csv = edited_df[['Código','Descripción']].to_csv(index=False)
+                    # edited_df[['Código','Descripción']].to_csv(output, index=False, quoting=1)  # quoting=1 asegura que los valores en comillas dobles se mantengan
 
                     # Obtener el texto CSV
-                    csv_text = output.getvalue()
-                    output.close()
+                    b64 = base64.b64encode(csv.encode()).decode()
 
                     # Codificar el texto CSV en base64
-                    b64 = base64.b64encode(csv_text.encode()).decode()
+                    # b64 = base64.b64encode(csv_text.encode()).decode()
 
                     # Crear el enlace para descargar el archivo CSV
                     linko = f'<a href="data:file/csv;base64,{b64}" download="cies.csv">Descargar un archivo tipo CSV</a>'
